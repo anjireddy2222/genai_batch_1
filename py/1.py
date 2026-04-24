@@ -103,9 +103,16 @@ print(is_interview_completed)
 
 if is_interview_completed == True:
     print("Thanks for attending interview, we will get back to you soon")
+    print("dssh")
 
 if is_human_support_required == True:
     print("send email")
+
+# if( ){
+#     hashsdhs
+#     SystemError
+#     sjsj
+# }
 
 
 
