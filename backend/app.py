@@ -56,5 +56,13 @@ def ai_chat(chat_data: ChatData):
     return { "result": "success", 'message': "our team will get back to you", "data": chat_data }
 
 
+# get conversation history -> mysql
+# get prompt
+# get RAG data
+
+# send to Claude or OpenAI or Open  source llms
+
+# based on response -> reply or call tools or run pipeline sor work flows
+
 
 
