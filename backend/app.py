@@ -39,6 +39,7 @@ class Signup(BaseModel):
 @app.post("/signup")
 def signup(signup: Signup):
     return { "result": "success", "message": "account created succesfully", "data": signup }
+    # insert into users(`name`, `email`, `pword`) values ('Bhavitya', 'contact@bhavitya.ai', '12345678'  ); 
 
 
 class ChatData(BaseModel):
