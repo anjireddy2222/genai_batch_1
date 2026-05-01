@@ -1,7 +1,7 @@
 
 from fastapi import FastAPI
 from pydantic import BaseModel
-
+import pymysql
 
 
 app = FastAPI()
@@ -16,6 +16,14 @@ app = FastAPI()
 # create api -> for every task
 
 # method -> api path -> data
+
+# connection open, execute, connection close
+
+def get_db_connection():
+    connection = pymysql.connect(host="localhost", user="root", port=3306, password="123456789", database="amazon_db", cursorclass=pymysql.cursors.DictCursor)
+    return connection
+
+
 
 @app.get("/")
 def index():
@@ -38,22 +46,59 @@ class Signup(BaseModel):
 
 @app.post("/signup")
 def signup(signup: Signup):
-    return { "result": "success", "message": "account created succesfully", "data": signup }
-    # insert into users(`name`, `email`, `pword`) values ('Bhavitya', 'contact@bhavitya.ai', '12345678'  ); 
+    # get data
+    print(signup.name, signup.email, signup.password)
+    # prepare query
+    query = "insert into users(`name`, `email`, `pword`) values (%s, %s, %s)"
+    # establish connection
+    connection = get_db_connection()
+    cursor = connection.cursor()
 
+    cursor.execute(query, (signup.name, signup.email, signup.password ))
+
+    connection.commit()
+    connection.close()
+
+    return { "result": "success", "message": "account created succesfully", "data": signup }
+    # insert into users(`name`, `email`, `pword`) values ('Bhavitya', 'contact@bhavitya.ai', '12345678' ); 
+
+
+@app.get("/users")
+def get_users():
+    # connect -> run select query -> return data
+    query = "select user_id, name, email, pword from users"
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(query)
+
+    users = cursor.fetchall()
+    conn.close()
+
+    return { "result": "success", "message": "users data", "data": users }
 
 class ChatData(BaseModel):
     business_id: str
-    conversation_id: str
+    user_id: str
     message: str
-    session_id: str
-    timezone: str
 
 
 @app.post("/api/wa/chat")
 def ai_chat(chat_data: ChatData):
+    
+    query = "select * from conversations where user_id=%s and business_id =%s "
+    conn = get_db_connection();
+    cursor = conn.cursor()
+
+    cursor.execute(query, (chat_data.user_id, chat_data.business_id))
+
+    history =cursor.fetchall()
+
+    conn.close()
+
     print( chat_data.business_id)
-    return { "result": "success", 'message': "our team will get back to you", "data": chat_data }
+    return { "result": "success", 'message': "our team will get back to you", "data": history }
 
 
 # get conversation history -> mysql
