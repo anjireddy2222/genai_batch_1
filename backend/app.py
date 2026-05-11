@@ -117,8 +117,7 @@ def ai_chat(chat_data: ChatData):
 
 # openai package -> api key -> 
 
-openai_api_key = "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"
-llm_model= "gpt-5.5" 
+openai_api_key = ""
 # question and answer
 # chat
 
