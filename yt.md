@@ -1,15 +1,27 @@
 
+# redirect user to github for login
+1. https://github.com/login/oauth/authorize
+    ?client_id=GITHUB_CLIENT_ID
+    &redirect_uri=https://yourapp.com/github/callback
+    &scope=user:email
 
-# Handling Global State Properly in React
+
+# github will send code to us
+2. callback?code=abc123
 
 
-    User data
+# get access token using code
+POST https://github.com/login/oauth/access_token
 
-    Cart data
+# get user details
+Fetch user details from GitHub
 
-    Settings
-
-    Multiple components
+Response:
+{
+   id: 101,
+   name: "Anji",
+   email: "test@gmail.com"
+}
 
 
 
