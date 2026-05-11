@@ -1,11 +1,12 @@
 
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
 import pymysql
 import openai
 import json
 import chromadb
 import uuid
+import utils
 
 
 app = FastAPI()
@@ -116,7 +117,7 @@ def ai_chat(chat_data: ChatData):
 
 # openai package -> api key -> 
 
-openai_api_key = ""
+openai_api_key = "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"
 llm_model= "gpt-5.5" 
 # question and answer
 # chat
@@ -280,14 +281,13 @@ def chroma_db_add_data():
         "springboot covers java, mysql, springboot, few aws concpets"
     ]
     # id, data, vectors
-response = []
-for data in courses_data:
-    vectors = openai_client.embeddings.
-    create(model="text-embedding-3-small", input=data)
-    #chroma_collection.add( ids=[ str( uuid.uuid4() ) ], documents=[data], embeddings=[vectors.data[0].embedding] )
-    response.append({'data': data, 'vectors': vectors})
+    response = []
+    for data in courses_data:
+        vectors = openai_client.embeddings.create(model="text-embedding-3-small", input=data)
+        #chroma_collection.add( ids=[ str( uuid.uuid4() ) ], documents=[data], embeddings=[vectors.data[0].embedding] )
+        response.append({'data': data, 'vectors': vectors})
 
-return response
+    return response
 
 
 @app.post("/chat-with-embeds")
@@ -296,10 +296,35 @@ def chat_with_embeds(req: AskData):
     vectors = openai_client.embeddings.create(model="text-embedding-3-small", input=req.question)
     vectors = vectors.data[0].embedding
     embed_results = chroma_collection.query( query_embeddings=[vectors], n_results=3 )
-    
-
 
     return embed_results
+
+
+@app.post("/rag-upload-file")
+def rag_file_uploader(file: UploadFile = File(...) ):
+    # print("RAG: file upload")
+    file_name = file.filename.lower()
+    text = ""
+
+    if file_name.endswith(".pdf"):
+        print("pdf")
+        text = utils.read_pdf(file)
+    
+    if file_name.endswith(".docx"):
+        print("document")
+        text = utils.read_docs(file)
+
+    if file_name.endswith(".txt"):
+        print("text file")
+        text = utils.read_txt_file(file)
+
+    # print(text)
+    chunks = utils.create_chunks(text)
+    print(chunks)
+
+
+
+    return { "response": text }
 
 
 
