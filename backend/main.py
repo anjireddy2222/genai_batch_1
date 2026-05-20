@@ -7,6 +7,8 @@ import chromadb
 import uuid
 import utils
 from dotenv import load_dotenv
+import templates
+import os
 
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
@@ -19,59 +21,66 @@ class ChatRequest(BaseModel):
     technology: str
     exp_in_years: str
     country: str
+    interview_id: str
+    user_id: str
 
 # prmompt template -> llm -> rag -> history
 
-prompt_template = """
-Role:
-    You are a senior technical interviewer conducting structured, professional interviews for software jobs
+"""
 
-TASK:
-    Conduct interactive interviews based on technology, years of experience, country ( difficulty /tone adjustment)
+user_id, user answer, ai question
 
-Instructions:
-    1. Ask one question at a time
-    2. Wait for candidate answer
-    3. Evaluate  the answer
-    4. Give rating and feedback
-    5. Ask next question or followup if needed
-    6. Continue until max 10 questions
-    7. provide final evaluation
+chats table
+chat_id  (auto increment), interview_id ,  user_id, data, user_type ( user, assistant)
 
-Input Data:
-    Candidate details
-        technology: {technology}
-        experience: {exp_in_years} year
-        country: {country}
 
-Constraints:
-    1. ask one question ata a time
-    2. Max questions 10
-    3. Keep questions clear, realistic
-    4. Ask followup questions if answer is not clear
-    5. Ask 2 to 3 followup questions regarding project, dig deep
-    6. Keep feedback short (2 to 3 lines)
-    7. If candidate is using abusive language, be polite and end the interview
-    8. Always keep professional tone and polite
-    9. Candidate shouldn't end interview, only you can decide when to end and max 10 questions.
-
-previous conversation:
-{history}  
-
-context:
-{rag}  
-
-Question: {question}
+interviews
+interview_id, user_id, status ( progress, completed), started_at, completed_at, result
 
 """
-llm_client = ChatOpenAI(model="gpt-4o-mini")
+
+def get_db_connection():
+    connection = pymysql.connect(host=os.getenv("DB_HOST"), user=os.getenv("DB_USER"), port=int(os.getenv("DB_PORT")), password=os.getenv("DB_PASSWORD"), database=os.getenv("DB_NAME"), cursorclass=pymysql.cursors.DictCursor)
+    return connection
+
+
+
+llm_client = ChatOpenAI(model="gpt-5.5")
 
 @app.post("/agent-chat")
 def agent_chat_with_lang_chain(req: ChatRequest):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    query = "select `data`, `user_type` from interview_data where interview_id=%s;"
+    cursor.execute(query, (req.interview_id))
+    history = cursor.fetchall()
+    history_data = ""
+    for data in history:
+        history_data = f" {history_data} \n {data["user_type"]}:{data["data"]} "
 
-    prompt = PromptTemplate.from_template(prompt_template)
-    prompt = prompt.format(technology=req.technology, exp_in_years= req.exp_in_years, country=req.country, history="", rag="",  question= req.question )
+    prompt = templates.interview_prompt.format(technology=req.technology, exp_in_years= req.exp_in_years, country=req.country, history=history_data, rag="",  question= req.question )
+    print("## prompt ##")
+    print(prompt)
     response = llm_client.invoke(prompt)
-    return { "received_data": response.content }
+
+    response = json.loads(response.content)
+
+    # insert user msg
+    query = "insert into interview_data(`interview_id`, `user_id`, `data`, `user_type`) values(%s,%s, %s, %s);"
+
+    cursor.execute(query, (req.interview_id, req.user_id,  req.question, "user"  ))
+
+    # insert ai reply
+    query = "insert into interview_data(`interview_id`, `user_id`, `data`, `user_type`) values(%s,%s, %s, %s);"
+    cursor.execute(query, (req.interview_id, req.user_id, response["reply"], "assistant" ))
+
+    connection.commit()
+    connection.close()
+
+    if response["is_interview_completed"]:
+        print("interview completed")
+
+
+    return { "received_data": response}
 
 
