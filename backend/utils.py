@@ -1,5 +1,8 @@
 from pypdf import PdfReader
 from docx import Document
+import requests
+from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 
 # read pdf data
 def read_pdf(file):
@@ -38,27 +41,31 @@ def create_chunks(data):
     return chunk_data
     
 
+# scrape website
+# requests beautifulsoup4  
+def scrape_server_rendered_website(url):
+    response = requests.get(url)
+    print( response.status_code )
+    if response.status_code == 200:
+        soap_response = BeautifulSoup(response.text, "html.parser")
+        return soap_response.get_text()
+    else:
+        return "unable to scrape your website"
 
 
+def scrape_ui_side_websites(url):
+    with sync_playwright() as p:
+        try:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(url, wait_until="networkidle")
+            text = page.inner_text("body")
+            browser.close()
+            return text
+        except Exception as ex:
+            return "Unable to scrape your website. Please provide knowledge through files or manual entry"
 
 
-
-#  2, 3,
-
-# chunk_size = 2
-# a b c d e f g h i j k  l  m
-# 0 1 2 3 4 5 6 7 8 9 10 11 12 
-# 0:2
-# 2:
-
-
-# a b -> 0 to 2 char
-# c d
-# e f g h
-# gh
-
-
-# [ ab, cd, ef, gh, kl, m]
 
 
 

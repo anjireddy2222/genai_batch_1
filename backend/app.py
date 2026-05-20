@@ -7,10 +7,13 @@ import json
 import chromadb
 import uuid
 import utils
+from dotenv import load_dotenv
 
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import PromptTemplate
 
 app = FastAPI()
-
+load_dotenv() # to get env keys
 # run fastapi project:  uvicorn app:app --reload  
 
 # app -> file name -> app.py
@@ -117,7 +120,7 @@ def ai_chat(chat_data: ChatData):
 
 # openai package -> api key -> 
 
-openai_api_key = "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"
+openai_api_key = ""
 llm_model= "gpt-5.5" 
 # question and answer
 # chat
@@ -201,17 +204,7 @@ def openai_enq(req: AskData):
             You are sales assistant for softwareschool. softwareschool is providing coding classes in telugu for job seekers.
             guide, qualify and suggest best courses based on user profile. 
             Courses:
-            Name: ReactJS
-            technologies: html, css, bootstrap, JS, reactjs
-            mode: recorded classes
-            demo ink: https://ss.co/react-demo
-            syllabus: https://ss.co/react-syllabus
-
-            Name: genAI
-            technologies: llm, prompt engineering, genai, ai agents, langchain
-            mode: live classes
-            demo ink: https://ss.co/genai-demo
-            syllabus: https://ss.co/genai-syllabus
+            
 
             if they are asking to talk to someone, we are available form 10 am IST to 6PM IST on whatsapp 9032029072 and email: contact@softwareschool.co and 
             check if they have any preferred time slot for the call so that our team can call them
@@ -229,6 +222,9 @@ def openai_enq(req: AskData):
                 "asking_for_call": "true or false based on conversation (if they are asking to talk to someone)",
                 "preferred_time_slot": "user's preferred call date and time based on your conversation",
                 "mobile_number": "user's mobile number"
+                "flight_date: ""
+                fliht_time: 
+                
             }}
         """
     }
@@ -322,11 +318,23 @@ def rag_file_uploader(file: UploadFile = File(...) ):
     chunks = utils.create_chunks(text)
     print(chunks)
 
-
-
     return { "response": text }
 
 
+@app.get("/scrape-server-websites")
+def scrape_server_websites():
+    url = "https://www.softwareschool.co/" # "https://bhavitya.ai/"
+    data = utils.scrape_server_rendered_website(url)
+    return { "data":  data}
+
+@app.get("/scrape-js-rendered-websites")
+def scrape_js_rendered_websites():
+    url = "https://medium.com/@apalshah/node-js-serve-private-content-using-aws-cloudfront-992e846259ae"
+    data = utils.scrape_ui_side_websites(url)
+
+    return { "data": data }
 
 
+
+# @app.post("agent-chat")
 
