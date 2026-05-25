@@ -9,6 +9,7 @@ import utils
 from dotenv import load_dotenv
 import templates
 import os
+import tools
 
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
@@ -44,7 +45,6 @@ def get_db_connection():
     return connection
 
 
-
 llm_client = ChatOpenAI(model="gpt-5.5")
 
 @app.post("/agent-chat")
@@ -56,7 +56,7 @@ def agent_chat_with_lang_chain(req: ChatRequest):
     history = cursor.fetchall()
     history_data = ""
     for data in history:
-        history_data = f" {history_data} \n {data["user_type"]}:{data["data"]} "
+        history_data = f" {history_data} \n {data['user_type']}:{data['data']} "
 
     prompt = templates.interview_prompt.format(technology=req.technology, exp_in_years= req.exp_in_years, country=req.country, history=history_data, rag="",  question= req.question )
     print("## prompt ##")
@@ -79,6 +79,8 @@ def agent_chat_with_lang_chain(req: ChatRequest):
 
     if response["is_interview_completed"]:
         print("interview completed")
+        tools.send_email("contact@ss.co", "Interview status", "Hi Anji,\n Please find the below details. \n ha gahkhas gahsg saskgagahaslga\n Thank you")
+
 
 
     return { "received_data": response}
