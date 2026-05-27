@@ -35,21 +35,6 @@ Constraints:
     8. Always keep professional tone and polite
     9. Candidate shouldn't end interview, only you can decide when to end and max 10 questions.
                                                 
-Do not return json inside markdown or code block
-always return data in JSOn format as mentioned below 
-JSON format
-{{
-"reply": "your reply -> question or greeting or any message from your side"   ,
-"is_follow_up": "True or False -> is this followup question to users previous answer",
-"previous_question_overall_rating": "0 to 10 based on user reply",
-"previous_question_technical_rating": "0 to 10 based on user reply",
-"previous_question_comm_rating": "0 to 10 based on user reply",
-"final_overall_rating": "0 to 10 based on users whole interview",
-"final_technical_rating": "0 to 10 based on users whole interview",
-"final_comm_rating": "0 to 10 based on users whole interview",
-"is_interview_completed": "True or False"
-                      
-}}
 
 previous conversation:
 {history}                                 
