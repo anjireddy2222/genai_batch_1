@@ -7,7 +7,8 @@ from langchain_community.tools import DuckDuckGoSearchRun
 from langchain.agents import create_agent
 from langchain.tools import tool
 from pydantic import BaseModel
-
+import middleware as md
+from langchain.agents.middleware import ToolRetryMiddleware, ModelRetryMiddleware, SummarizationMiddleware
 
 load_dotenv()
 
@@ -59,7 +60,17 @@ class AiResponse(BaseModel):
     ai_reply: str
     confidence: float
 
-agent = create_agent("openai:gpt-5.5", tools=tools, system_prompt=prompt, response_format=AiResponse, name="ss_sales_agent")
+agent = create_agent("openai:gpt-5.5", 
+                     tools=tools, 
+                     system_prompt=prompt, 
+                     response_format=AiResponse, 
+                     name="ss_sales_agent",
+                     middleware=[ 
+                         md.LoggingMiddleware(), 
+                         ModelRetryMiddleware(max_retries=3, max_delay=10 ),
+                        #  SummarizationMiddleware(model="openai:gpt-5.5", trigger=("tokens", 300))
+                         ]
+                    )
 
 
 @app.get("/")
@@ -69,6 +80,7 @@ def index(req: UserInput):
             { "role": "user","content": req.msg }
         ]
     }
+
     response = agent.invoke( input_data )
     
     # whatsapp send api : from: 919032029072, to: 918019032313, text: ai_reply, oauth token
